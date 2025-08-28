@@ -25,6 +25,12 @@ var (
 	ErrInvalidEmail     = errors.New("valid email is required")
 )
 
+// CreateUserRequest represents the request body for creating a user
+type CreateUserRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"pass" validate:"required,min=6"`
+}
+
 type UserHandler struct {
 	userService *application.UserService
 }
@@ -123,18 +129,17 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		zap.String("path", r.URL.Path),
 	)
 
-	var user domain.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	var req CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Error("Failed to decode request body", zap.Error(err))
 		_ = utils.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	// Basic validation
-	if user.Email == "" {
-		logger.Warn("Validation failed", zap.String("error", "email is required"))
-		_ = utils.BadRequest(w, "Email is required")
-		return
+	// Create domain user
+	user := domain.User{
+		Email:    req.Email,
+		Password: req.Password,
 	}
 
 	logger = logger.With(zap.String("email", user.Email))
@@ -142,7 +147,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Log user creation attempt
 	dbStart := time.Now()
-	createdUser, err := h.userService.CreateUser(r.Context(), &user)
+	createdUser, err := h.userService.Create(r.Context(), &user)
 	dbDuration := time.Since(dbStart)
 
 	if err != nil {
@@ -211,7 +216,7 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	)
 	logger.Info("Fetching users list")
 
-	// Log database query
+	// Get users using the service layer
 	dbStart := time.Now()
 	users, err := h.userService.ListUsers(r.Context(), page, limit)
 	dbDuration := time.Since(dbStart)

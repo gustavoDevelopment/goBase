@@ -123,7 +123,7 @@ func (r *BaseRepository[T]) Count(ctx context.Context) (int64, error) {
 	return r.collection.CountDocuments(ctx, bson.M{})
 }
 
-// toMap converts a struct to a map[string]interface{}
+// toMap converts a struct to a map[string]interface{} while respecting bson tags
 func toMap(entity interface{}) (map[string]interface{}, error) {
 	data, err := bson.Marshal(entity)
 	if err != nil {
@@ -132,5 +132,16 @@ func toMap(entity interface{}) (map[string]interface{}, error) {
 
 	var result map[string]interface{}
 	err = bson.Unmarshal(data, &result)
-	return result, err
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure the password field is properly mapped if it exists
+	// The User struct uses bson:"pass" for the Password field
+	if p, ok := result["Password"]; ok {
+		result["pass"] = p
+		delete(result, "Password")
+	}
+
+	return result, nil
 }

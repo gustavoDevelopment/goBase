@@ -34,7 +34,6 @@ func (r *GenericRepository[T]) Create(ctx context.Context, entity *T) (string, e
 	}
 
 	entityMap["date_created"] = timestamp
-	entityMap["date_updated"] = timestamp
 
 	result, err := r.collection.InsertOne(ctx, entityMap)
 	if err != nil {

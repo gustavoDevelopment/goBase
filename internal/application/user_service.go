@@ -3,12 +3,16 @@ package application
 import (
 	"api-ptf-core-business-orchestrator-go-ms/internal/domain"
 	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/repository"
+	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -53,6 +57,17 @@ func (s *UserService) ListUsers(ctx context.Context, page, limit int64) ([]domai
 	return s.genericRepo.FindAll(ctx, page, limit)
 }
 
+// generateRandomPassword generates a random 6-character string
+func generateRandomPassword(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
 // Create creates a new user
 func (s *UserService) Create(ctx context.Context, user *domain.User) (*domain.User, error) {
 	// Check if user with email already exists
@@ -65,17 +80,24 @@ func (s *UserService) Create(ctx context.Context, user *domain.User) (*domain.Us
 		return nil, fmt.Errorf("user with email %s already exists", user.Email)
 	}
 
-	// Hash the password before saving
+	// Set timestamps and ID
+	now := time.Now()
+	user.ID = uuid.New().String()
+	user.DateCreated = now
+
+	// Generate random password if not provided
+	if user.Password == "" {
+		user.Password = generateRandomPassword(6)
+	}
+
+	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %w", err)
 	}
 	user.Password = string(hashedPassword)
 
-	// Set timestamps
-	now := time.Now()
-	user.DateCreated = now
-	user.DateUpdated = now
+	logger.Logger().Info("Creating user", zap.String("user_id", user.ID), zap.String("email", user.Email))
 
 	// Create the user
 	id, err := s.genericRepo.Create(ctx, user)
