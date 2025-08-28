@@ -4,10 +4,12 @@ import (
 	"api-ptf-core-business-orchestrator-go-ms/internal/application"
 	"api-ptf-core-business-orchestrator-go-ms/internal/config"
 	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/handlers"
+	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/middleware"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
+
 
 // NewRouter creates a new HTTP router with all the routes
 func NewRouter(cfg *config.Config, userService *application.UserService) *mux.Router {
@@ -32,6 +34,7 @@ func NewRouter(cfg *config.Config, userService *application.UserService) *mux.Ro
 	}).Methods("GET")
 
 	// Add middleware
+	r.Use(middleware.RequestIDMiddleware)
 	r.Use(loggingMiddleware)
 	r.Use(mux.CORSMethodMiddleware(r))
 

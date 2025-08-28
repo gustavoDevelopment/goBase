@@ -3,15 +3,18 @@ package handlers
 import (
 	"api-ptf-core-business-orchestrator-go-ms/internal/application"
 	"api-ptf-core-business-orchestrator-go-ms/internal/domain"
+	httpMiddleware "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/middleware"
 	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/utils"
+	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 )
 
 // Common error messages
@@ -44,23 +47,55 @@ func NewUserHandler(userService *application.UserService) *UserHandler {
 // @Failure 500 {object} utils.Response
 // @Router /users/{id} [get]
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := httpMiddleware.GetRequestID(r.Context())
+
+	// Get logger from context and add request context
+	logger := logger.FromContext(r.Context()).With(
+		zap.String("request_id", requestID),
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+	)
+
+	// Log request
+	logger.Info("GetUserByID started")
+
 	vars := mux.Vars(r)
 	userID := strings.TrimSpace(vars["id"])
 
+	logger = logger.With(zap.String("user_id", userID))
+	logger.Info("Fetching user by ID")
+
 	if userID == "" {
-		utils.NotFound(w, "User not found")
+		logger.Warn("Empty user ID provided")
+		_ = utils.BadRequest(w, "User ID is required")
 		return
 	}
 
+	// Log database call
+	dbStart := time.Now()
 	user, err := h.userService.GetUserByID(r.Context(), userID)
+	dbDuration := time.Since(dbStart)
+
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
+			logger.Warn("User not found")
 			_ = utils.NotFound(w, "User not found")
-		} else {
-			_ = utils.InternalServerError(w, "Failed to retrieve user: "+err.Error())
+			return
 		}
+
+		logger.Error("Failed to fetch user", zap.Error(err))
+		_ = utils.InternalServerError(w, "Failed to fetch user: "+err.Error())
 		return
 	}
+
+	// Log successful response
+	logger.Info("GetUserByID completed",
+		zap.String("request_id", requestID),
+		zap.String("user_id", userID),
+		zap.Duration("db_duration", dbDuration),
+		zap.Duration("total_duration", time.Since(start)),
+	)
 
 	_ = utils.SendSuccess(w, "SUCCESS", "User retrieved successfully", http.StatusOK, user)
 }
@@ -77,23 +112,53 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.Response
 // @Router /users [post]
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	requestID := httpMiddleware.GetRequestID(r.Context())
+
+	// Log request
+	logger := logger.FromContext(r.Context())
+	logger.Info("CreateUser started",
+		zap.String("request_id", requestID),
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+	)
+
 	var user domain.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		_ = utils.SendError(w, http.StatusUnprocessableEntity, "INVALID_REQUEST", "Invalid request body")
+		logger.Error("Failed to decode request body", zap.Error(err))
+		_ = utils.BadRequest(w, "Invalid request body")
 		return
 	}
 
 	// Basic validation
 	if user.Email == "" {
+		logger.Warn("Validation failed", zap.String("error", "email is required"))
 		_ = utils.BadRequest(w, "Email is required")
 		return
 	}
 
+	logger = logger.With(zap.String("email", user.Email))
+	logger.Info("Creating new user")
+
+	// Log user creation attempt
+	dbStart := time.Now()
 	createdUser, err := h.userService.CreateUser(r.Context(), &user)
+	dbDuration := time.Since(dbStart)
+
 	if err != nil {
+		logger.Error("Failed to create user", zap.Error(err))
 		_ = utils.InternalServerError(w, "Failed to create user: "+err.Error())
 		return
 	}
+
+	// Log successful creation
+	logger.Info("User created successfully",
+		zap.String("request_id", requestID),
+		zap.String("user_id", createdUser.ID),
+		zap.String("email", createdUser.Email),
+		zap.Duration("db_duration", dbDuration),
+		zap.Duration("total_duration", time.Since(start)),
+	)
 
 	_ = utils.SendSuccess(w, "USER_CREATED", "User created successfully", http.StatusCreated, createdUser)
 }
@@ -120,24 +185,39 @@ type ListUsersResponse struct {
 // @Failure 500 {object} utils.Response
 // @Router /users [get]
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	// Parse pagination parameters
-	page, err := strconv.ParseInt(r.URL.Query().Get("page"), 10, 64)
-	if err != nil || page < 1 {
-		page = 1
-	}
+	start := time.Now()
+	requestID := httpMiddleware.GetRequestID(r.Context())
 
-	limit, err := strconv.ParseInt(r.URL.Query().Get("limit"), 10, 64)
-	switch {
-	case err != nil || limit < 1:
-		limit = 10
-	case limit > 100:
-		_ = utils.BadRequest(w, "Limit must be between 1 and 100")
+	// Log request
+	logger := logger.FromContext(r.Context())
+	logger.Info("ListUsers started",
+		zap.String("request_id", requestID),
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+		zap.String("query", r.URL.RawQuery),
+	)
+
+	// Parse pagination parameters
+	page, limit, err := httpMiddleware.GetPaginationParams(r)
+	if err != nil {
+		logger.Warn("Invalid pagination parameters", zap.Error(err))
+		_ = utils.BadRequest(w, err.Error())
 		return
 	}
 
-	// Get users
+	logger = logger.With(
+		zap.Int64("page", page),
+		zap.Int64("limit", limit),
+	)
+	logger.Info("Fetching users list")
+
+	// Log database query
+	dbStart := time.Now()
 	users, err := h.userService.ListUsers(r.Context(), page, limit)
+	dbDuration := time.Since(dbStart)
+
 	if err != nil {
+		logger.Error("Failed to fetch users", zap.Error(err))
 		_ = utils.InternalServerError(w, "Failed to fetch users: "+err.Error())
 		return
 	}
@@ -152,6 +232,17 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	response.Pagination.Page = page
 	response.Pagination.Limit = limit
 	response.Pagination.Total = total
+
+	// Log successful response
+	logger.Info("ListUsers completed",
+		zap.String("request_id", requestID),
+		zap.Int64("page", page),
+		zap.Int64("limit", limit),
+		zap.Int("users_count", len(users)),
+		zap.Int64("total_users", total),
+		zap.Duration("db_duration", dbDuration),
+		zap.Duration("total_duration", time.Since(start)),
+	)
 
 	_ = utils.SendSuccess(w, "SUCCESS", "Users retrieved successfully", http.StatusOK, response)
 }
