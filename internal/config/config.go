@@ -4,7 +4,7 @@ import (
 	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -91,10 +91,12 @@ func LoadConfig(configPath string) (*Config, error) {
 	}
 
 	// Clean up base path (ensure it starts with / and doesn't end with /)
-	if config.HTTP.BasePath != "/" {
-		config.HTTP.BasePath = "/" + config.HTTP.BasePath
+	config.HTTP.BasePath = strings.TrimSpace(config.HTTP.BasePath)
+	if config.HTTP.BasePath == "" {
+		config.HTTP.BasePath = "/api/v1"
 	}
-	config.HTTP.BasePath = "/" + filepath.Clean(config.HTTP.BasePath)
+	// Ensure it starts with a single slash and doesn't end with a slash
+	config.HTTP.BasePath = "/" + strings.Trim(config.HTTP.BasePath, "/")
 
 	return &config, nil
 }
