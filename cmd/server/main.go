@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"api-ptf-core-business-orchestrator-go-ms/internal/domain"
 	"log"
 	"net/http"
 	"os"
@@ -176,10 +178,11 @@ func initializeApp(ctx context.Context) (*Application, error) {
 	logger.Log.Info("Successfully connected to MongoDB")
 
 	// Inicializar repositorios
-	userRepo := repository.NewMongoUserRepository(db.GetCollection(cfg.MongoCollection))
+	genRepo := repository.NewGenericRepository[domain.User](db.GetCollection("onb-ptf-users"))
+	userRepo := repository.NewMongoUserRepository(db.GetCollection("onb-ptf-users"))
 
 	// Inicializar servicios
-	userService := application.NewUserService(userRepo)
+	userService := application.NewUserService(genRepo, userRepo)
 
 	return &Application{
 		cfg:         cfg,

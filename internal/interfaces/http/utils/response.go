@@ -8,13 +8,18 @@ import (
 	"time"
 )
 
-// Common error codes
+// Códigos de error comunes para respuestas HTTP
 const (
-	CodeBadRequest          = "BAD_REQUEST"
-	CodeUnauthorized        = "UNAUTHORIZED"
-	CodeForbidden           = "FORBIDDEN"
-	CodeNotFound            = "NOT_FOUND"
-	CodeInternalServerError = "INTERNAL_SERVER_ERROR"
+	// CodeBadRequest (400) indica que la solicitud es inválida o mal formada
+	CodeBadRequest = "400"
+	// CodeUnauthorized (401) indica que se requiere autenticación pero no se proporcionó o es inválida
+	CodeUnauthorized = "401"
+	// CodeForbidden (403) indica que el usuario no tiene permisos para acceder al recurso
+	CodeForbidden = "403"
+	// CodeNotFound (404) indica que el recurso solicitado no existe
+	CodeNotFound = "404"
+	// CodeInternalServerError (500) indica un error interno del servidor
+	CodeInternalServerError = "500"
 )
 
 const (
@@ -30,9 +35,9 @@ var (
 
 // Response represents the standard API response structure
 type Response struct {
-	Code     string      `json:"responseCode"` // Machine-readable status code
-	Message  string      `json:"message"`      // Human-readable message
-	Datetime string      `json:"datetime"`     // Timestamp in ISO 8601 format
+	Code     string      `json:"code"`           // Machine-readable status code
+	Message  string      `json:"message"`        // Human-readable message
+	Datetime string      `json:"datetime"`       // Timestamp in ISO 8601 format
 	Data     interface{} `json:"data,omitempty"` // Optional response payload
 }
 
@@ -71,6 +76,7 @@ func (r *Response) WriteJSON(w http.ResponseWriter, statusCode int) error {
 
 	return nil
 }
+
 // sendResponse is a helper function to send a response with the given parameters
 func sendResponse(w http.ResponseWriter, code, message string, data interface{}, statusCode int) error {
 	resp, err := NewResponse(code, message, data)

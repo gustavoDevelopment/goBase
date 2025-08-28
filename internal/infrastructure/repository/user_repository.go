@@ -5,19 +5,18 @@ import (
 	"time"
 
 	"api-ptf-core-business-orchestrator-go-ms/internal/domain"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// UserRepository defines the interface for user data operations
+// UserRepository define la interfaz para operaciones de datos de usuarios
 type UserRepository interface {
-	FindByID(ctx context.Context, id string) (*domain.User, error)
-	FindAll(ctx context.Context, page, limit int64) ([]domain.User, error)
-	Create(ctx context.Context, user *domain.User) (string, error)
-	Update(ctx context.Context, id string, user *domain.User) error
-	Delete(ctx context.Context, id string) error
+	// Métodos adicionales
+	FindByEmail(ctx context.Context, email string) (*domain.User, error)
+	Count(ctx context.Context) (int64, error)
 }
 
 // MongoUserRepository is the MongoDB implementation of UserRepository
@@ -102,7 +101,7 @@ func (r *MongoUserRepository) FindAll(ctx context.Context, page, limit int64) ([
 // Update updates an existing user
 func (r *MongoUserRepository) Update(ctx context.Context, id string, user *domain.User) error {
 	user.DateUpdated = time.Now()
-	
+
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
