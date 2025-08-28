@@ -2,9 +2,12 @@ package database
 
 import (
 	"context"
+	"crypto/tls"
+	"fmt"
 	"sync"
 
 	"api-ptf-core-business-orchestrator-go-ms/internal/config"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -24,20 +27,33 @@ var (
 func NewDatabase(cfg *config.Config) (*Database, error) {
 	var err error
 	once.Do(func() {
+		// Parse the connection string
 		clientOptions := options.Client().ApplyURI(cfg.MongoURI)
-		
+
+		// Configure TLS settings
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true, // Skip certificate verification
+		}
+
+		// Apply TLS configuration
+		clientOptions.SetTLSConfig(tlsConfig)
+		clientOptions.SetServerSelectionTimeout(cfg.Timeout)
+		clientOptions.SetConnectTimeout(cfg.Timeout)
+
+		// Create context with timeout
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
 		defer cancel()
 
+		// Connect to MongoDB
 		client, connectErr := mongo.Connect(ctx, clientOptions)
 		if connectErr != nil {
-			err = connectErr
+			err = fmt.Errorf("failed to connect to MongoDB: %w", connectErr)
 			return
 		}
 
-		// Ping the database to verify the connection
+		// Verify the connection
 		if pingErr := client.Ping(ctx, nil); pingErr != nil {
-			err = pingErr
+			err = fmt.Errorf("failed to ping MongoDB: %w", pingErr)
 			return
 		}
 
