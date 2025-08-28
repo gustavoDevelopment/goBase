@@ -3,18 +3,24 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 
 	"api-ptf-core-business-orchestrator-go-ms/internal/application"
 	"api-ptf-core-business-orchestrator-go-ms/internal/config"
 	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database"
 	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/repository"
+	httpServer "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http"
 	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
+
+	"go.uber.org/zap"
 )
 
 // Application contiene las dependencias de la aplicación
@@ -25,9 +31,9 @@ type Application struct {
 }
 
 func main() {
-	// Inicialización básica
+	// Inicializar la aplicación básica (esto inicializa el logger)
 	if err := initializeApplication(); err != nil {
-		logger.Log.Fatal("Failed to initialize application", zap.Error(err))
+		log.Fatalf("Failed to initialize application: %v", err)
 	}
 	defer logger.Sync()
 
@@ -51,22 +57,55 @@ func main() {
 	}
 }
 
-// run inicia la ejecución de la aplicación
+// run starts the HTTP server and keeps it running until a shutdown signal is received
 func (a *Application) run(ctx context.Context) error {
-	logger.Log.Info("Application started successfully")
-
-	// Ejemplo de uso del servicio
-	logger.Log.Debug("Fetching example user...")
-	exampleUser, err := a.userService.GetUserByID(ctx, 1)
-	if err != nil {
-		logger.Log.Error("Error getting user", zap.Error(err))
-	} else {
-		logger.Log.Info("Found user", zap.Any("user", exampleUser))
+	// Create HTTP server with our router
+	router := httpServer.NewRouter(a.cfg, a.userService)
+	srv := &http.Server{
+		Addr:    ":" + a.cfg.HTTP.Port,
+		Handler: router,
 	}
 
-	// Mantener la aplicación en ejecución hasta recibir señal de terminación
-	<-ctx.Done()
-	logger.Log.Info("Shutting down...")
+	// Server run context
+	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+
+	// Listen for syscall signals for process shutdown
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		// Shutdown signal with grace period of 30 seconds
+		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		defer cancel()
+
+		go func() {
+			<-shutdownCtx.Done()
+			if shutdownCtx.Err() == context.DeadlineExceeded {
+				logger.Log.Fatal("Graceful shutdown timed out. Forcing exit.")
+			}
+		}()
+
+		// Trigger graceful shutdown
+		err := srv.Shutdown(shutdownCtx)
+		if err != nil {
+			logger.Log.Error("HTTP server shutdown error", zap.Error(err))
+		}
+		serverStopCtx()
+	}()
+
+	// Start the server
+	logger.Log.Info("Starting HTTP server",
+		zap.String("context_path", a.cfg.HTTP.BasePath),
+		zap.String("port", a.cfg.HTTP.Port),
+	)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+
+	// Wait for server context to be stopped
+	<-serverCtx.Done()
+	logger.Log.Info("Server stopped")
 	return nil
 }
 
@@ -93,18 +132,22 @@ func initializeApplication() error {
 func initializeApp(ctx context.Context) (*Application, error) {
 	logger.Log.Info("Starting application initialization...")
 
-	// Cargar configuración
-	cfg, err := config.LoadConfig(".env")
+	// Get the current working directory
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filepath.Dir(filepath.Dir(filename))) // Go up two levels to the project root
+	configPath := filepath.Join(dir, "configs", "config.yaml")
+
+	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load config from %s: %w", configPath, err)
+	}
+
+	// Ensure MongoDB URI is properly formatted
+	if !strings.HasPrefix(cfg.MongoURI, "mongodb://") && !strings.HasPrefix(cfg.MongoURI, "mongodb+srv://") {
+		cfg.MongoURI = "mongodb://" + cfg.MongoURI
 	}
 
 	// Inicializar conexión a MongoDB
-	logger.Log.Info("Connecting to MongoDB...",
-		zap.String("uri", cfg.MongoURI),
-		zap.String("database", cfg.MongoDB),
-	)
-
 	db, err := database.NewDatabase(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create database client: %w", err)

@@ -16,7 +16,6 @@ type InMemoryUserRepository struct {
 func NewInMemoryUserRepository() *InMemoryUserRepository {
 	// Initialize with some dummy data
 	users := make(map[int64]*domain.User)
-	users[1] = &domain.User{ID: 1, Name: "John Doe", Email: "john.doe@example.com"}
 	return &InMemoryUserRepository{users: users}
 }
 
