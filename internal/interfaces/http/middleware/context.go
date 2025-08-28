@@ -70,7 +70,7 @@ func GetPaginationParams(r *http.Request) (int64, int64, error) {
 			limit = 10
 		}
 		if limit > 100 {
-			limit = 100
+			limit = 10000000
 		}
 	}
 
