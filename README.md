@@ -1,17 +1,60 @@
-# 🚀 API PTF Core Business Orchestrator
+# 🚀 Plantilla de Proyecto Go con Arquitectura Limpia
 
-Microservicio de orquestación de negocios para PTF, construido con Go y MongoDB siguiendo los principios de Clean Architecture.
+Plantilla para proyectos Go que sigue los principios de Clean Architecture, diseñada para ser el punto de partida de aplicaciones escalables y mantenibles.
 
-## 📋 Características Principales
+## 🌟 Características
 
-- ✅ API RESTful para gestión de usuarios
-- 🔐 Autenticación JWT integrada
-- 🏗️ Arquitectura limpia (Clean Architecture)
-- 📚 Documentación Swagger/OpenAPI
-- 🛠️ Manejo centralizado de errores
-- 📊 Logging estructurado con Zap
-- ⚙️ Configuración mediante variables de entorno
-- 🔄 Conexión a MongoDB con reconexión automática
+- 🏗️ **Arquitectura Limpia** con separación clara de capas
+- 🔒 **Autenticación JWT** integrada
+- 🗄️ **MongoDB** como base de datos principal
+- 🧪 **Pruebas unitarias** con ejemplos
+- 📦 **Docker** y Docker Compose listos para producción
+- 🔄 **GitHub Actions** para CI/CD
+- 📝 **Documentación** detallada
+
+## 🚀 Cómo Usar Esta Plantilla
+
+### 1. Crear un Nuevo Proyecto
+
+```bash
+# Usar la plantilla con GitHub CLI
+gh repo create mi-nuevo-proyecto --template=tu-usuario/go-clean-architecture-template
+
+# O clonar directamente
+git clone --depth=1 https://github.com/tu-usuario/go-clean-architecture-template.git mi-nuevo-proyecto
+cd mi-nuevo-proyecto
+```
+
+### 2. Inicializar el Proyecto
+
+```bash
+# Hacer ejecutable el script de inicialización
+chmod +x init.sh
+
+# Ejecutar el script de inicialización
+./init.sh
+
+# Seguir las instrucciones en pantalla para configurar tu proyecto
+```
+
+### 3. Configurar el Entorno
+
+1. Copia el archivo de configuración de ejemplo:
+   ```bash
+   cp configs/config.example.yaml configs/config.yaml
+   ```
+
+2. Actualiza las variables de configuración en `configs/config.yaml` según sea necesario.
+
+### 4. Iniciar el Servidor de Desarrollo
+
+```bash
+# Modo desarrollo
+go run cmd/server/main.go
+
+# O con variables de entorno
+PORT=8080 go run cmd/server/main.go
+```
 
 ## 🚦 Requisitos Previos
 

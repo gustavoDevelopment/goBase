@@ -1,0 +1,63 @@
+# Template Configuration
+name: "go-clean-architecture"
+description: "Plantilla de proyecto Go con arquitectura limpia"
+version: "0.1.0"
+
+# Variables que serán reemplazadas durante la inicialización
+variables:
+  - name: "module_name"
+    description: "Nombre del módulo Go (ej: github.com/usuario/mi-proyecto)"
+    default: "github.com/novopayment/{{.ProjectName}}"
+    required: true
+
+  - name: "project_name"
+    description: "Nombre del proyecto (usado en documentación y configuraciones)"
+    default: "mi-proyecto"
+    required: true
+
+  - name: "go_version"
+    description: "Versión de Go requerida"
+    default: "1.21"
+
+  - name: "port"
+    description: "Puerto por defecto para la aplicación"
+    default: "8080"
+
+# Archivos que deben ser procesados para reemplazar variables
+process:
+  - "**/*.go"
+  - "**/*.mod"
+  - "**/*.yaml"
+  - "**/*.yml"
+  - "**/*.json"
+  - "**/*.md"
+  - "**/*.env*"
+  - "**/Dockerfile*"
+  - "**/Makefile"
+  - "**/.github/**"
+
+# Archivos que deben ser excluidos del procesamiento
+exclude:
+  - "**/vendor/**"
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "**/.idea/**"
+  - "**/.vscode/**"
+  - "**/*.test.go"
+  - "**/testdata/**"
+  - "**/tmp/**"
+  - "**/dist/**"
+  - "**/bin/**"
+
+# Comandos a ejecutar después de inicializar el proyecto
+post_init:
+  - cmd: go mod download
+    description: "Descargar dependencias de Go"
+  - cmd: go mod tidy
+    description: "Limpiar y verificar dependencias"
+  - cmd: go test ./...
+    description: "Ejecutar pruebas unitarias"
+
+# Metadatos adicionales
+author: "Tu Nombre"
+license: "MIT"
