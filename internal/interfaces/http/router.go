@@ -1,10 +1,10 @@
 package http
 
 import (
-	"api-ptf-core-business-orchestrator-go-ms/internal/application"
 	"api-ptf-core-business-orchestrator-go-ms/internal/config"
-	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/handlers"
 	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/middleware"
+	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/routes"
+	"api-ptf-core-business-orchestrator-go-ms/internal/models"
 	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 	"net/http"
 	"time"
@@ -25,26 +25,13 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 }
 
 // NewRouter creates a new HTTP router with all the routes
-func NewRouter(cfg *config.Config, userService *application.UserService) *mux.Router {
+func NewRouter(cfg *config.Config, a *models.Application) *mux.Router {
 	r := mux.NewRouter()
 
 	// Use the base path from config
 	api := r.PathPrefix(cfg.HTTP.BasePath).Subrouter()
 
-	// Initialize handlers
-	userHandler := handlers.NewUserHandler(userService)
-
-	// User routes
-	userRouter := api.PathPrefix("/users").Subrouter()
-	userRouter.HandleFunc("", userHandler.ListUsers).Methods("GET")
-	userRouter.HandleFunc("", userHandler.CreateUser).Methods("POST")
-	userRouter.HandleFunc("/{id}", userHandler.GetUserByID).Methods("GET")
-
-	// Health check endpoint
-	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}).Methods("GET")
+	routes.SetupRoutes(api, a)
 
 	// Add middleware
 	r.Use(middleware.RequestIDMiddleware)
