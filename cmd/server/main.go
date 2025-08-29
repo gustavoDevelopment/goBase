@@ -23,46 +23,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// Application contiene las dependencias de la aplicación
-type Application struct {
-	cfg *config.Config
-	db  *database.Database
-}
-
-func main() {
-	// Inicializar la aplicación básica (esto inicializa el logger)
-	if err := initializeApplication(); err != nil {
-		log.Fatalf("Failed to initialize application: %v", err)
-	}
-	defer logger.Sync()
-
-	// Configuración del contexto
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Configuración de señales
-	setupGracefulShutdown(cancel)
-
-	// Inicialización de la aplicación
-	app, err := initializeApp(ctx)
-	if err != nil {
-		logger.Log.Fatal("Failed to initialize application services", zap.Error(err))
-	}
-	defer app.cleanup(ctx)
-
-	// Iniciar la aplicación
-	if err := app.run(ctx); err != nil {
-		logger.Log.Fatal("Application error", zap.Error(err))
-	}
+type applicationWrapper struct {
+	*models.Application
 }
 
 // run starts the HTTP server and keeps it running until a shutdown signal is received
-func (a *Application) run(ctx context.Context) error {
+func (aw *applicationWrapper) run(ctx context.Context) error {
 	// Create HTTP server with our router
-	app := models.NewApplication(a.cfg, a.db)
-	router := httpServer.NewRouter(a.cfg, app)
+	router := httpServer.NewRouter(aw.Application)
 	srv := &http.Server{
-		Addr:    ":" + a.cfg.HTTP.Port,
+		Addr:    ":" + aw.Configs().HTTP.Port,
 		Handler: router,
 	}
 
@@ -96,8 +66,88 @@ func (a *Application) run(ctx context.Context) error {
 
 	// Start the server
 	logger.Log.Info("Starting HTTP server",
-		zap.String("context_path", a.cfg.HTTP.BasePath),
-		zap.String("port", a.cfg.HTTP.Port),
+		zap.String("context_path", aw.Configs().HTTP.BasePath),
+		zap.String("port", aw.Configs().HTTP.Port),
+	)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+
+	// Wait for server context to be stopped
+	<-serverCtx.Done()
+	logger.Log.Info("Server stopped")
+	return nil
+}
+
+func main() {
+	// Inicializar la aplicación básica (esto inicializa el logger)
+	if err := initializeApplication(); err != nil {
+		log.Fatalf("Failed to initialize application: %v", err)
+	}
+	defer logger.Sync()
+
+	// Configuración del contexto
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Configuración de señales
+	setupGracefulShutdown(cancel)
+
+	// Inicialización de la aplicación
+	app, err := initializeApp(ctx)
+	if err != nil {
+		logger.Log.Fatal("Failed to initialize application services", zap.Error(err))
+	}
+	defer app.cleanup(ctx)
+
+	// Iniciar la aplicación
+	if err := app.run(ctx); err != nil {
+		logger.Log.Fatal("Application error", zap.Error(err))
+	}
+}
+
+// run starts the HTTP server and keeps it running until a shutdown signal is received
+func run(ctx context.Context) error {
+	// Create HTTP server with our router
+	app := models.NewEmptyApplication()
+	router := httpServer.NewRouter(app)
+	srv := &http.Server{
+		Addr:    ":" + app.Configs().HTTP.Port,
+		Handler: router,
+	}
+
+	// Server run context
+	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+
+	// Listen for syscall signals for process shutdown
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		// Shutdown signal with grace period of 30 seconds
+		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		defer cancel()
+
+		go func() {
+			<-shutdownCtx.Done()
+			if shutdownCtx.Err() == context.DeadlineExceeded {
+				logger.Log.Fatal("Graceful shutdown timed out. Forcing exit.")
+			}
+		}()
+
+		// Trigger graceful shutdown
+		err := srv.Shutdown(shutdownCtx)
+		if err != nil {
+			logger.Log.Error("HTTP server shutdown error", zap.Error(err))
+		}
+		serverStopCtx()
+	}()
+
+	// Start the server
+	logger.Log.Info("Starting HTTP server",
+		zap.String("context_path", app.Configs().HTTP.BasePath),
+		zap.String("port", app.Configs().HTTP.Port),
 	)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("failed to start server: %w", err)
@@ -110,10 +160,10 @@ func (a *Application) run(ctx context.Context) error {
 }
 
 // cleanup realiza la limpieza de recursos de la aplicación
-func (a *Application) cleanup(ctx context.Context) {
-	if a.db != nil {
+func (a *applicationWrapper) cleanup(ctx context.Context) {
+	if a.MongoDB() != nil {
 		logger.Log.Info("Disconnecting from database...")
-		if err := a.db.Disconnect(ctx); err != nil {
+		if err := a.MongoDB().Disconnect(ctx); err != nil {
 			logger.Log.Error("Error disconnecting from database", zap.Error(err))
 		}
 	}
@@ -129,7 +179,7 @@ func initializeApplication() error {
 }
 
 // initializeApp inicializa y configura la aplicación
-func initializeApp(ctx context.Context) (*Application, error) {
+func initializeApp(ctx context.Context) (*applicationWrapper, error) {
 	logger.Log.Info("Starting application initialization...")
 
 	// Get the current working directory
@@ -137,18 +187,18 @@ func initializeApp(ctx context.Context) (*Application, error) {
 	dir := filepath.Dir(filepath.Dir(filepath.Dir(filename))) // Go up two levels to the project root
 	configPath := filepath.Join(dir, "configs", "config.yaml")
 
-	cfg, err := config.LoadConfig(configPath)
+	config, err := config.LoadConfig(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config from %s: %w", configPath, err)
 	}
 
 	// Ensure MongoDB URI is properly formatted
-	if !strings.HasPrefix(cfg.MongoURI, "mongodb://") && !strings.HasPrefix(cfg.MongoURI, "mongodb+srv://") {
-		cfg.MongoURI = "mongodb://" + cfg.MongoURI
+	if !strings.HasPrefix(config.MongoURI, "mongodb://") && !strings.HasPrefix(config.MongoURI, "mongodb+srv://") {
+		config.MongoURI = "mongodb://" + config.MongoURI
 	}
 
 	// Inicializar conexión a MongoDB
-	db, err := database.NewDatabase(cfg)
+	db, err := database.NewDatabase(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create database client: %w", err)
 	}
@@ -176,10 +226,7 @@ func initializeApp(ctx context.Context) (*Application, error) {
 	logger.Log.Info("Successfully connected to MongoDB")
 
 	// Crear la aplicación usando el constructor
-	return &Application{
-		cfg: cfg,
-		db:  db,
-	}, nil
+	return &applicationWrapper{Application: models.NewApplication(config, db)}, nil
 }
 
 // setupGracefulShutdown configura el manejo de señales para un apagado controlado

@@ -16,6 +16,7 @@ type Config struct {
 	AppName         string     `yaml:"application_name"`
 	Description     string     `yaml:"description"`
 	Version         string     `yaml:"application_version"`
+	Uuid            string     `yaml:"entity_uuid"`
 	Environment     string     `yaml:"environment"`
 	MongoURI        string     `yaml:"-"`
 	MongoDB         string     `yaml:"-"`

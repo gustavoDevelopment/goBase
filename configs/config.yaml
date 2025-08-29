@@ -1,7 +1,7 @@
-application_name: "api-ptf-core-business-orchestrator-ms"
-description: "Core Business Orchestrator Microservice for PTF"
+application_name: "api-core-template-go-ms"
+description: "Template for new microservices in Go"
 application_version: "1.0.0"
-entity_uuid: ""  # Generate a new UUID or keep empty for now
+entity_uuid: "4668d436-548e-41d2-9f95-d8c8420ba535"  # Generate a new UUID or keep empty for now
 environment: "dev"
 
 # Logging configuration

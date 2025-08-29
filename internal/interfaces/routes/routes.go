@@ -10,7 +10,7 @@ import (
 
 // SetupRoutes configura todas las rutas
 func SetupRoutes(router *mux.Router, a *models.Application) {
-	uR.RegisterInfoRoutes(router)
+	uR.RegisterInfoRoutes(router, a)
 	uR.RegisterRysncRoutes(router)
 	uD.RegisterUserRoutes(router, a)
 }
