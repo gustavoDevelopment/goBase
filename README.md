@@ -53,6 +53,53 @@ MONGO_DATABASE=ptf-core
 JWT_SECRET=tu_clave_secreta_aqui
 ```
 
+## 📦 Constantes del Proyecto
+
+El proyecto utiliza constantes para mantener consistencia en los nombres de rutas y métodos HTTP. Estas constantes se encuentran en el paquete `internal/pkg/constants/`.
+
+### Métodos HTTP
+
+```go
+// internal/pkg/constants/Methods.go
+package constants
+
+const (
+    GET     = "GET"
+    POST    = "POST"
+    PUT     = "PUT"
+    DELETE  = "DELETE"
+    PATCH   = "PATCH"
+    OPTIONS = "OPTIONS"
+    HEAD    = "HEAD"
+)
+```
+
+### Rutas de la API
+
+```go
+// internal/pkg/constants/Paths.go
+package constants
+
+const (
+    UTILS_GROUP  = ""
+    HEALTH_CHECK = "/health"
+    RSYNC        = "/rsync"
+    USER_GROUP   = "/users"
+    PREFIX       = USER_GROUP + "/examples/"
+)
+```
+
+### Uso en las rutas
+
+Al definir nuevas rutas, se recomienda utilizar estas constantes para mantener la consistencia:
+
+```go
+import "api-ptf-core-business-orchestrator-go-ms/internal/pkg/constants"
+
+// Ejemplo de uso en la definición de rutas
+router.HandleFunc(constants.HEALTH_CHECK, healthHandler).Methods(constants.GET)
+```
+
 ## 🏗️ Estructura del Proyecto
 
 ```
