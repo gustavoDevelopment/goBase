@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/utils"
+	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/utils"
 	"net/http"
 )
 

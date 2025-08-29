@@ -11,3 +11,16 @@ type Application struct {
 	db          *database.Database
 	userService *application.UserService
 }
+
+// NewApplication creates a new Application instance with the provided dependencies
+func NewApplication(cfg *config.Config, db *database.Database) *Application {
+	return &Application{
+		cfg: cfg,
+		db:  db,
+	}
+}
+
+// DB returns the database instance
+func (a *Application) DB() *database.Database {
+	return a.db
+}

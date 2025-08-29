@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"api-ptf-core-business-orchestrator-go-ms/internal/domain"
+	"api-ptf-core-business-orchestrator-go-ms/internal/models"
 	"log"
 	"net/http"
 	"os"
@@ -15,10 +15,8 @@ import (
 	"syscall"
 	"time"
 
-	"api-ptf-core-business-orchestrator-go-ms/internal/application"
 	"api-ptf-core-business-orchestrator-go-ms/internal/config"
 	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database"
-	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/repository"
 	httpServer "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http"
 	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 
@@ -27,9 +25,8 @@ import (
 
 // Application contiene las dependencias de la aplicación
 type Application struct {
-	cfg         *config.Config
-	db          *database.Database
-	userService *application.UserService
+	cfg *config.Config
+	db  *database.Database
 }
 
 func main() {
@@ -62,7 +59,8 @@ func main() {
 // run starts the HTTP server and keeps it running until a shutdown signal is received
 func (a *Application) run(ctx context.Context) error {
 	// Create HTTP server with our router
-	router := httpServer.NewRouter(a.cfg, a.userService)
+	app := models.NewApplication(a.cfg, a.db)
+	router := httpServer.NewRouter(a.cfg, app)
 	srv := &http.Server{
 		Addr:    ":" + a.cfg.HTTP.Port,
 		Handler: router,
@@ -177,17 +175,10 @@ func initializeApp(ctx context.Context) (*Application, error) {
 
 	logger.Log.Info("Successfully connected to MongoDB")
 
-	// Inicializar repositorios
-	genRepo := repository.NewGenericRepository[domain.User](db.GetCollection("onb-ptf-users"))
-	userRepo := repository.NewMongoUserRepository(db.GetCollection("onb-ptf-users"))
-
-	// Inicializar servicios
-	userService := application.NewUserService(genRepo, userRepo)
-
+	// Crear la aplicación usando el constructor
 	return &Application{
-		cfg:         cfg,
-		db:          db,
-		userService: userService,
+		cfg: cfg,
+		db:  db,
 	}, nil
 }
 
