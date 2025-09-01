@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -79,7 +79,7 @@ func (aw *applicationWrapper) run(ctx context.Context) error {
 	return nil
 }
 
-func main() {
+func StartUp() {
 	// Inicializar la aplicación básica (esto inicializa el logger)
 	if err := initializeApplication(); err != nil {
 		log.Fatalf("Failed to initialize application: %v", err)
