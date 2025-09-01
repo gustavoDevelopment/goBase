@@ -1,0 +1,476 @@
+{
+	"info": {
+		"_postman_id": "a11b3bdb-4f8d-4706-9a4f-f748fb5139d1",
+		"name": "api-ptf-core-business-orchestator-ms",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15383593",
+		"_collection_link": "https://galactic-rocket-797451.postman.co/workspace/InstaPayment~3ee53f37-4411-4d64-801d-57956236cb26/collection/15383593-a11b3bdb-4f8d-4706-9a4f-f748fb5139d1?action=share&source=collection_link&creator=15383593"
+	},
+	"item": [
+		{
+			"name": "Pod Health",
+			"item": [
+				{
+					"name": "Get Pod Info",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Tenant-Id",
+								"value": "4dd4abf1-f6fc-4a48-8280-25fdc971b970"
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "e30b625a-e085-42a5-aac2-3d52f73ad8fe"
+							},
+							{
+								"key": "Cookie",
+								"value": "JSESSIONID=82112745BF893834E8C2D06163FDB699"
+							}
+						],
+						"url": {
+							"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/podInfo",
+							"host": [
+								"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+							],
+							"path": [
+								"podInfo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Tenant-Id",
+								"value": "{{tenant-id}}",
+								"disabled": true
+							},
+							{
+								"key": "X-Request-Id",
+								"value": "{{$guid}}",
+								"disabled": true
+							},
+							{
+								"key": "Cookie",
+								"value": "JSESSIONID=82112745BF893834E8C2D06163FDB699",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/actuator/health",
+							"host": [
+								"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "resync",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/resync",
+							"host": [
+								"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+							],
+							"path": [
+								"resync"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "apis",
+			"item": [
+				{
+					"name": "code",
+					"item": [
+						{
+							"name": "doOnGenerateCode",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnUpdateCode",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes/{{accoutnId}}/{{codeId}}",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes",
+										"{{accoutnId}}",
+										"{{codeId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnUpdateCodePrimeTrust",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes/{{accoutnId}}/{{codeId}}",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes",
+										"{{accoutnId}}",
+										"{{codeId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnCodeInformation",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes/{{accoutnId}}",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes",
+										"{{accoutnId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "onboarding",
+					"item": [
+						{
+							"name": "doOnClosedOnboarding",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/onboarding/finish",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"onboarding",
+										"finish"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnOnboarding",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/onboarding",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"onboarding"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnValidate",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/onboarding/validate",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"onboarding",
+										"validate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "goApis",
+			"item": [
+				{
+					"name": "code",
+					"item": [
+						{
+							"name": "doOnGenerateCode",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnUpdateCode",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes/{{accoutnId}}/{{codeId}}",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes",
+										"{{accoutnId}}",
+										"{{codeId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnUpdateCodePrimeTrust",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes/{{accoutnId}}/{{codeId}}",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes",
+										"{{accoutnId}}",
+										"{{codeId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnCodeInformation",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/codes/{{accoutnId}}",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"codes",
+										"{{accoutnId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "onboarding",
+					"item": [
+						{
+							"name": "doOnClosedOnboarding",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/onboarding/finish",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"onboarding",
+										"finish"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnOnboarding",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/onboarding",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"onboarding"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "doOnValidate",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}/onboarding/validate",
+									"host": [
+										"{{ptf-core-business-orchestator}}{{ptf-core-business-orchestator-context}}"
+									],
+									"path": [
+										"onboarding",
+										"validate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "users",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}/{{ptf-core-business-orchestator-context}}/users?limit=1000",
+									"host": [
+										"{{ptf-core-business-orchestator}}"
+									],
+									"path": [
+										"{{ptf-core-business-orchestator-context}}",
+										"users"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "1000"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "createUser",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"{{$randomEmail}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}/{{ptf-core-business-orchestator-context}}/users",
+									"host": [
+										"{{ptf-core-business-orchestator}}"
+									],
+									"path": [
+										"{{ptf-core-business-orchestator-context}}",
+										"users"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Health",
+					"item": [
+						{
+							"name": "health",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}/{{ptf-core-business-orchestator-context}}/health",
+									"host": [
+										"{{ptf-core-business-orchestator}}"
+									],
+									"path": [
+										"{{ptf-core-business-orchestator-context}}",
+										"health"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "rsync",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{ptf-core-business-orchestator}}/{{ptf-core-business-orchestator-context}}/rsync",
+									"host": [
+										"{{ptf-core-business-orchestator}}"
+									],
+									"path": [
+										"{{ptf-core-business-orchestator-context}}",
+										"rsync"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "exampesRestExternalConsumer",
+					"item": [],
+					"description": "StartFragment\n\n## 📌 Integración de Go con la API REST `https://api.restful-api.dev/objects`\n\nLa API pública de **Restful API Dev** permite interactuar con recursos tipo **Objects** mediante operaciones CRUD (Create, Read, Update, Delete).  \n  \nCon Go, la integración se realiza a través del paquete estándar `net/http` y librerías de serialización como `encoding/json`.\n\n### 🔹 Características principales de la API\n\n- **Base URL:** `https://api.restful-api.dev/objects`\n    \n- **Operaciones soportadas:**\n    \n    - `GET /objects` → Lista todos los objetos\n        \n    - `GET /objects/{id}` → Consulta un objeto específico\n        \n    - `POST /objects` → Crea un objeto\n        \n    - `PUT /objects/{id}` → Actualiza un objeto\n        \n    - `DELETE /objects/{id}` → Elimina un objeto\n        \n\n### 🔹 Flujo de integración en Go\n\n1. **Realizar solicitudes HTTP** usando `http.NewRequest` o `http.Get`.\n    \n2. **Procesar respuestas** con `http.Response` y leer el `Body`.\n    \n3. **Decodificar JSON** usando `json.Unmarshal` en structs definidos en Go.\n    \n4. (Opcional) Manejar errores y códigos de estado HTTP."
+				}
+			]
+		}
+	]
+}

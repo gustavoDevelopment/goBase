@@ -11,7 +11,7 @@ log:
 
 # HTTP server configuration
 http:
-  port: "8080"
+  port: "8426"
   base_path: ${BASE_PATH}
   read_timeout: "30s"
   write_timeout: "30s"

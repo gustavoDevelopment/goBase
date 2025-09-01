@@ -2,6 +2,7 @@ package routes
 
 import (
 	uD "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/routes/domain"
+	eX "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/routes/example"
 	uR "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/routes/utils"
 	"api-ptf-core-business-orchestrator-go-ms/internal/models"
 
@@ -13,4 +14,5 @@ func SetupRoutes(router *mux.Router, a *models.Application) {
 	uR.RegisterInfoRoutes(router, a)
 	uR.RegisterRysncRoutes(router)
 	uD.RegisterUserRoutes(router, a)
+	eX.RegisterExampleRoutes(router)
 }
