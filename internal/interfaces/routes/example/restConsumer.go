@@ -12,5 +12,6 @@ func RegisterExampleRoutes(router *mux.Router) {
 	exampleHandler := handlers.NewExampleHandler()
 
 	subrouter := router.PathPrefix(constants.REST_CLIENT_GROUP).Subrouter()
-	subrouter.HandleFunc("/", exampleHandler.GetAllObjects).Methods(constants.GET)
+	subrouter.HandleFunc("/characters", exampleHandler.GetAllCharacters).Methods(constants.GET)
+	subrouter.HandleFunc("/planets", exampleHandler.GetAllPlanets).Methods(constants.GET)
 }

@@ -13,16 +13,17 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	AppName         string     `yaml:"application_name"`
-	Description     string     `yaml:"description"`
-	Version         string     `yaml:"application_version"`
-	Uuid            string     `yaml:"entity_uuid"`
-	Environment     string     `yaml:"environment"`
-	MongoURI        string     `yaml:"-"`
-	MongoDB         string     `yaml:"-"`
-	MongoCollection string     `yaml:"-"`
-	HTTP            HTTPConfig `yaml:"http"`
-	App             AppConfig  `yaml:"app"`
+	AppName         string      `yaml:"application_name"`
+	Description     string      `yaml:"description"`
+	Version         string      `yaml:"application_version"`
+	Uuid            string      `yaml:"entity_uuid"`
+	Environment     string      `yaml:"environment"`
+	MongoURI        string      `yaml:"-"`
+	MongoDB         string      `yaml:"-"`
+	MongoCollection string      `yaml:"-"`
+	HTTP            HTTPConfig  `yaml:"http"`
+	App             AppConfig   `yaml:"app"`
+	JSONConfig      *JSONConfig // Embedded JSON configuration
 }
 
 // HTTPConfig holds HTTP server configuration
@@ -43,9 +44,10 @@ type AppConfig struct {
 	} `yaml:"mongodb"`
 	JWTSecret          string `yaml:"jwt_secret"`
 	PasswordSaltRounds int    `yaml:"password_salt_rounds"`
+	JSONConfigPath     string `yaml:"json_config_path"`
 }
 
-// LoadConfig reads configuration from YAML file and environment variables
+// LoadConfig reads configuration from YAML file, environment variables, and JSON config
 func LoadConfig(configPath string) (*Config, error) {
 	// Load environment variables from .env file if it exists first
 	// Load .env file if it exists
@@ -57,7 +59,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	// Load YAML config
 	configFile, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
+		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
 
 	// Expand environment variables in the YAML content
@@ -69,6 +71,20 @@ func LoadConfig(configPath string) (*Config, error) {
 	var config Config
 	if err := yaml.Unmarshal([]byte(expandedConfig), &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	logger.Log.Info("Config loaded successfully", zap.String("config_path", config.App.JSONConfigPath))
+
+	// Load JSON config if path is provided in config
+	if config.App.JSONConfigPath != "" {
+		jsonConfig, err := LoadJSONConfig(config.App.JSONConfigPath)
+		if err != nil {
+			logger.Log.Warn("Failed to load JSON config",
+				zap.String("path", config.App.JSONConfigPath),
+				zap.Error(err))
+		} else {
+			config.JSONConfig = jsonConfig
+		}
 	}
 
 	// Set default values if environment variables are not set

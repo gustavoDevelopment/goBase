@@ -46,6 +46,49 @@ chmod +x init.sh
 
 2. Actualiza las variables de configuración en `configs/config.yaml` según sea necesario.
 
+### 3.1 Configuración JSON
+
+La aplicación también utiliza un archivo JSON para configuraciones específicas. Este archivo debe estar ubicado en la ruta especificada en la configuración YAML bajo `app.json_config_path` (por defecto `./config/parameters.json`).
+
+#### Estructura del archivo JSON:
+
+```json
+{
+  "integrationPaths": [
+    {
+      "name": "ejemplo.ruta",
+      "value": "/ruta/ejemplo"
+    }
+  ],
+  "certificates": [
+    {
+      "name": "nombre.certificado",
+      "value": "contenido-del-certificado"
+    }
+  ],
+  "params": [
+    {
+      "name": "parametro.ejemplo",
+      "value": "valor-del-parametro"
+    }
+  ]
+}
+```
+
+#### Uso en el código:
+
+```go
+import "api-ptf-core-business-orchestrator-go-ms/internal/pkg/utils"
+
+// Obtener un parámetro
+if value, found := utils.GetParam("parametro.ejemplo"); found {
+    // Usar el valor
+}
+
+// Obtener un parámetro con valor por defecto
+value := utils.GetParamOrDefault("parametro.inexistente", "valor-por-defecto")
+```
+
 ### 4. Iniciar el Servidor de Desarrollo
 
 ```bash
@@ -485,6 +528,114 @@ La documentación interactiva está disponible en:
 - `PUT /api/v1/users/{id}` - Actualizar usuario
 - `DELETE /api/v1/users/{id}` - Eliminar usuario
 - `GET /api/v1/users/email/{email}` - Buscar usuario por email
+
+## 🏗️ Estructura del Proyecto
+
+```
+.
+├── cmd/                 # Punto de entrada de la aplicación
+├── configs/             # Archivos de configuración YAML
+├── internal/
+│   ├── application/     # Lógica de negocio y casos de uso
+│   ├── client/          # Clientes HTTP/API externas
+│   ├── config/          # Configuración de la aplicación
+│   ├── domain/          # Entidades del dominio
+│   ├── interfaces/      # Controladores HTTP y rutas
+│   └── pkg/             # Utilidades compartidas
+```
+
+## ⚙️ Configuración
+
+### Archivo de Configuración YAML
+
+El archivo principal de configuración está en `configs/config.yaml` y sigue esta estructura:
+
+```yaml
+application_name: "api-core-template-go-ms"
+description: "Template for new microservices in Go"
+application_version: "1.0.0"
+environment: "dev"
+
+http:
+  port: "8426"
+  base_path: "/api/business-orchestrator/v1"
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "120s"
+
+app:
+  mongodb:
+    uri: ${MONGO_URI}
+    database: ${MONGO_DATABASE}
+    timeout: ${TIMEOUT}
+  
+  # Ruta al archivo de configuración JSON
+  json_config_path: "${JSON_CONFIG_PATH}"
+```
+
+### Estructura del Archivo de Configuración JSON
+
+El archivo de configuración JSON (especificado en `app.json_config_path`) debe seguir esta estructura:
+
+```json
+{
+  "integrationPaths": [
+    {
+      "name": "examples.one.domain",
+      "value": "api.restful-api.dev"
+    },
+    {
+      "name": "examples.one.port",
+      "value": "443"
+    },
+    {
+      "name": "examples.one.path",
+      "value": "/objects"
+    }
+  ]
+}
+```
+
+## 🌐 Endpoints de la API
+
+### Ejemplos
+- `GET /api/business-orchestrator/v1/examples` - Obtener lista de ejemplos de API externa
+
+### Salud
+- `GET /api/business-orchestrator/v1/health` - Verificar estado del servicio
+
+## 🚀 Despliegue
+
+### Local con Docker
+
+```bash
+docker-compose up -d
+```
+
+### Producción
+
+1. Construir la imagen:
+   ```bash
+   docker build -t myapp .
+   ```
+
+2. Ejecutar el contenedor:
+   ```bash
+   docker run -d -p 8426:8426 --env-file .env myapp
+   ```
+
+## 🧪 Pruebas
+
+Ejecutar todas las pruebas:
+```bash
+go test ./...
+```
+
+Con cobertura:
+```bash
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
 
 ## 📄 Licencia
 

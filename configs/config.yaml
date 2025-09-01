@@ -29,6 +29,9 @@ app:
   jwt_secret: "${JWT_SECRET}"
   password_salt_rounds: 10
   
+  # JSON Configuration
+  json_config_path: "${JSON_CONFIG_PATH}"  # Default: ./config/parameters.json
+  
   # External services
   external_services:
     timeout: "30s"
