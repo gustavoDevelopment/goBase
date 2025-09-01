@@ -7,4 +7,6 @@ const (
 
 	USER_GROUP = "/users"
 	PREFIX     = USER_GROUP + "/examples/"
+
+	REST_CLIENT_GROUP = "/examples/dragonball"
 )

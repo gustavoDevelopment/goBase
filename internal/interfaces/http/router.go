@@ -1,7 +1,6 @@
 package http
 
 import (
-	"api-ptf-core-business-orchestrator-go-ms/internal/config"
 	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http/middleware"
 	"api-ptf-core-business-orchestrator-go-ms/internal/interfaces/routes"
 	"api-ptf-core-business-orchestrator-go-ms/internal/models"
@@ -25,11 +24,11 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 }
 
 // NewRouter creates a new HTTP router with all the routes
-func NewRouter(cfg *config.Config, a *models.Application) *mux.Router {
+func NewRouter(a *models.Application) *mux.Router {
 	r := mux.NewRouter()
 
 	// Use the base path from config
-	api := r.PathPrefix(cfg.HTTP.BasePath).Subrouter()
+	api := r.PathPrefix(a.Configs().HTTP.BasePath).Subrouter()
 
 	routes.SetupRoutes(api, a)
 

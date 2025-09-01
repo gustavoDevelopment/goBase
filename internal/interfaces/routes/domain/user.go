@@ -11,7 +11,7 @@ import (
 
 func RegisterUserRoutes(router *mux.Router, a *models.Application) {
 	// Inicializar repositorios
-	userRepo := repository.NewMongoUserRepository(a.DB())
+	userRepo := repository.NewMongoUserRepository(a.MongoDB())
 
 	// Inicializar servicios
 	userService := application.NewUserService(userRepo.Repo, userRepo)
