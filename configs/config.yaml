@@ -24,6 +24,23 @@ app:
     uri: ${MONGO_URI}  # Set from environment variable
     database: ${MONGO_DATABASE}  # Set from environment variable
     timeout: ${TIMEOUT}  # Set from environment variable
+  postgres:
+    host: "${POSTGRES_HOST}"
+    port: ${POSTGRES_PORT}
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    dbname: "${POSTGRES_DBNAME}"
+    sslmode: "${POSTGRES_SSLMODE}"
+    maxOpenConns: ${POSTGRES_MAXOPENCONNS}
+    maxIdleConns: ${POSTGRES_MAXIDLECONNS}
+  oracle:
+    host: "${ORACLE_HOST}"
+    port: ${ORACLE_PORT}
+    user: "${ORACLE_USER}"
+    password: "${ORACLE_PASSWORD}"
+    dbname: "${ORACLE_DBNAME}"
+    maxOpenConns: ${ORACLE_MAXOPENCONNS}
+    maxIdleConns: ${ORACLE_MAXIDLECONNS}
   
   # Security
   jwt_secret: "${JWT_SECRET}"

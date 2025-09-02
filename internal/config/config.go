@@ -4,6 +4,7 @@ import (
 	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -35,6 +36,28 @@ type HTTPConfig struct {
 	IdleTimeout  string `yaml:"idle_timeout"`
 }
 
+type PostgresConfig struct {
+	Host         string `yaml:"host"`
+	Port         int    `yaml:"port"`
+	User         string `yaml:"user"`
+	Password     string `yaml:"password"`
+	DBName       string `yaml:"dbname"`
+	SSLMode      string `yaml:"sslmode"`
+	MaxOpenConns int    `yaml:"max_open_conns"`
+	MaxIdleConns int    `yaml:"max_idle_conns"`
+}
+
+type OracleConfig struct {
+	Host         string `yaml:"host"`
+	Port         int    `yaml:"port"`
+	User         string `yaml:"user"`
+	Password     string `yaml:"password"`
+	DBName       string `yaml:"dbname"`
+	SSLMode      string `yaml:"sslmode"`
+	MaxOpenConns int    `yaml:"max_open_conns"`
+	MaxIdleConns int    `yaml:"max_idle_conns"`
+}
+
 // AppConfig holds application-specific configuration
 type AppConfig struct {
 	MongoDB struct {
@@ -42,18 +65,26 @@ type AppConfig struct {
 		Database string `yaml:"database"`
 		Timeout  string `yaml:"timeout"`
 	} `yaml:"mongodb"`
-	JWTSecret          string `yaml:"jwt_secret"`
-	PasswordSaltRounds int    `yaml:"password_salt_rounds"`
-	JSONConfigPath     string `yaml:"json_config_path"`
+	Postgres           PostgresConfig `yaml:"postgres"`
+	Oracle             OracleConfig   `yaml:"oracle"`
+	JWTSecret          string         `yaml:"jwt_secret"`
+	PasswordSaltRounds int            `yaml:"password_salt_rounds"`
+	JSONConfigPath     string         `yaml:"json_config_path"`
 }
 
 // LoadConfig reads configuration from YAML file, environment variables, and JSON config
 func LoadConfig(configPath string) (*Config, error) {
-	// Load environment variables from .env file if it exists first
-	// Load .env file if it exists
-	err := godotenv.Load()
-	if err != nil {
-		logger.Log.Info("No .env file found, using system environment variables", zap.Error(err))
+	// Determine the project root from the config path to locate the .env file
+	configDir := filepath.Dir(configPath)
+	projectRoot := filepath.Dir(configDir)
+	dotenvPath := filepath.Join(projectRoot, ".env")
+
+	if _, err := os.Stat(dotenvPath); err == nil {
+		if err := godotenv.Load(dotenvPath); err != nil {
+			return nil, fmt.Errorf("error loading .env file from %s: %w", dotenvPath, err)
+		}
+	} else {
+		logger.Log.Info("No .env file found, using system environment variables")
 	}
 
 	// Load YAML config

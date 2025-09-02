@@ -1,10 +1,9 @@
 package repository
 
 import (
+	mongoDb "api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database/mongo"
 	"context"
 	"time"
-
-	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,7 +19,7 @@ type GenericRepository[T any] struct {
 }
 
 // NewGenericRepository crea una nueva instancia de GenericRepository
-func NewGenericRepository[T any](db *database.Database, collectionName string) *GenericRepository[T] {
+func NewGenericRepository[T any](db *mongoDb.Database, collectionName string) *GenericRepository[T] {
 	return &GenericRepository[T]{
 		collection: db.GetCollection(collectionName),
 	}
