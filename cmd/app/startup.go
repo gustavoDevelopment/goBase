@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	mongoDb "api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database/mongo"
+	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database/oracle"
+	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database/postgrest"
 	"api-ptf-core-business-orchestrator-go-ms/internal/models"
 	"log"
 	"net/http"
@@ -16,7 +19,6 @@ import (
 	"time"
 
 	"api-ptf-core-business-orchestrator-go-ms/internal/config"
-	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database"
 	httpServer "api-ptf-core-business-orchestrator-go-ms/internal/interfaces/http"
 	"api-ptf-core-business-orchestrator-go-ms/internal/pkg/logger"
 
@@ -167,6 +169,15 @@ func (a *applicationWrapper) cleanup(ctx context.Context) {
 			logger.Log.Error("Error disconnecting from database", zap.Error(err))
 		}
 	}
+	if a.PostgreSQLPool() != nil {
+		logger.Log.Info("Closing PostgreSQL connection pool...")
+		postgrest.CloseDB(a.PostgreSQLPool())
+	}
+
+	if a.OraclePool() != nil {
+		logger.Log.Info("Closing Oracle connection pool...")
+		oracle.CloseDB(a.OraclePool())
+	}
 }
 
 // initializeApplication realiza la inicialización básica de la aplicación
@@ -198,7 +209,7 @@ func initializeApp(ctx context.Context) (*applicationWrapper, error) {
 	}
 
 	// Inicializar conexión a MongoDB
-	db, err := database.NewDatabase(config)
+	db, err := mongoDb.NewDatabase(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create database client: %w", err)
 	}
@@ -225,8 +236,20 @@ func initializeApp(ctx context.Context) (*applicationWrapper, error) {
 
 	logger.Log.Info("Successfully connected to MongoDB")
 
+	// Inicializar conexión a PostgreSQL
+	pgPool, err := postgrest.InitDB(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize postgresql: %w", err)
+	}
+
+	// Inicializar conexión a Oracle
+	oraclePool, err := oracle.InitDB(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize oracle: %w", err)
+	}
+
 	// Crear la aplicación usando el constructor
-	return &applicationWrapper{Application: models.NewApplication(config, db)}, nil
+	return &applicationWrapper{Application: models.NewApplication(config, db, pgPool, oraclePool)}, nil
 }
 
 // setupGracefulShutdown configura el manejo de señales para un apagado controlado

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"api-ptf-core-business-orchestrator-go-ms/internal/domain"
-	"api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database"
+	mongoDb "api-ptf-core-business-orchestrator-go-ms/internal/infrastructure/database/mongo"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,7 +26,7 @@ type MongoUserRepository struct {
 }
 
 // NewMongoUserRepository creates a new MongoDB user repository
-func NewMongoUserRepository(db *database.Database) *MongoUserRepository {
+func NewMongoUserRepository(db *mongoDb.Database) *MongoUserRepository {
 	return &MongoUserRepository{
 		Repo: NewGenericRepository[domain.User](db, "onb-ptf-users"),
 	}
